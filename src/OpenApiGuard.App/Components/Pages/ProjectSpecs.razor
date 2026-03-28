@@ -1,0 +1,194 @@
+@page "/projects/{ProjectId:guid}/specs"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
+
+<PageTitle>Specs — OpenAPI Guard</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/">Projects</a> <span>/</span> @projectName
+</div>
+
+@if (project is not null)
+{
+    <div class="page-header">
+        <div>
+            <h2>@project.Name</h2>
+            @if (!string.IsNullOrEmpty(project.Description))
+            {
+                <span class="text-muted">@project.Description</span>
+            }
+        </div>
+        <a href="/projects/@ProjectId/specs/upload" class="btn btn-primary">Upload spec</a>
+    </div>
+
+    <div class="gh-tabs">
+        <a href="/projects/@ProjectId/specs" class="active">Specs</a>
+        <a href="/projects/@ProjectId/diffs">Diffs</a>
+        <a href="/projects/@ProjectId/rules">Rules</a>
+        <a href="/projects/@ProjectId/settings">Settings</a>
+    </div>
+
+    @if (specs is null || specs.Count == 0)
+    {
+        <div class="empty-state">
+            <h3>No specs uploaded yet</h3>
+            <p>Upload your first OpenAPI v3 spec to get started.</p>
+            <a href="/projects/@ProjectId/specs/upload" class="btn btn-primary mt-4">Upload spec</a>
+        </div>
+    }
+    else
+    {
+        <table class="gh-table">
+            <thead>
+                <tr>
+                    <th>Version label</th>
+                    <th>Source</th>
+                    <th>Format</th>
+                    <th>Uploaded at</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in specs)
+                {
+                    <tr>
+                        <td style="font-weight: 600;">@s.Label</td>
+                        <td><span class="badge badge-muted">@s.Source</span></td>
+                        <td class="font-mono text-muted">@s.Format</td>
+                        <td class="text-muted">@s.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (specs.Count >= 2)
+        {
+            <div class="gh-box mt-4">
+                <div class="gh-box-header">Compare</div>
+                <div class="d-flex gap-4 align-center">
+                    <div class="form-group" style="flex:1; margin-bottom: 0;">
+                        <label>From</label>
+                        <select class="form-control" @bind="fromSpecId">
+                            <option value="">Select…</option>
+                            @foreach (var s in specs)
+                            {
+                                <option value="@s.Id">@s.Label</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1; margin-bottom: 0;">
+                        <label>To</label>
+                        <select class="form-control" @bind="toSpecId">
+                            <option value="">Select…</option>
+                            @foreach (var s in specs)
+                            {
+                                <option value="@s.Id">@s.Label</option>
+                            }
+                        </select>
+                    </div>
+                    <div style="padding-top: 22px;">
+                        <button class="btn btn-primary" @onclick="RunCompare" disabled="@comparing">
+                            @(comparing ? "Comparing…" : "Compare")
+                        </button>
+                    </div>
+                </div>
+                @if (compareError is not null)
+                {
+                    <div class="alert alert-danger mt-2">@compareError</div>
+                }
+            </div>
+        }
+    }
+}
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private Project? project;
+    private string projectName = "…";
+    private List<ApiSpecVersion>? specs;
+    private string fromSpecId = "";
+    private string toSpecId = "";
+    private string? compareError;
+    private bool comparing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        project = await db.Projects.FindAsync(ProjectId);
+        if (project is not null)
+        {
+            projectName = project.Name;
+            specs = await db.ApiSpecVersions
+                .Where(s => s.ProjectId == ProjectId)
+                .OrderByDescending(s => s.UploadedAt)
+                .ToListAsync();
+        }
+    }
+
+    private async Task RunCompare()
+    {
+        compareError = null;
+
+        if (!Guid.TryParse(fromSpecId, out var from) || !Guid.TryParse(toSpecId, out var to))
+        {
+            compareError = "Please select both From and To specs.";
+            return;
+        }
+
+        if (from == to)
+        {
+            compareError = "From and To must be different specs.";
+            return;
+        }
+
+        comparing = true;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var fromSpec = await db.ApiSpecVersions.FindAsync(from);
+            var toSpec = await db.ApiSpecVersions.FindAsync(to);
+
+            if (fromSpec is null || toSpec is null)
+            {
+                compareError = "Spec not found.";
+                return;
+            }
+
+            var result = OpenApiDiffEngine.Compare(fromSpec.RawSpecText, toSpec.RawSpecText);
+
+            var summaryJson = System.Text.Json.JsonSerializer.Serialize(result.Items.Select(i => new
+            {
+                i.Severity,
+                i.Kind,
+                i.Target,
+                i.Message
+            }));
+
+            var report = new DiffReport
+            {
+                ProjectId = ProjectId,
+                FromSpecId = from,
+                ToSpecId = to,
+                BreakingCount = result.BreakingCount,
+                WarningCount = result.WarningCount,
+                InfoCount = result.InfoCount,
+                SummaryJson = summaryJson,
+                CreatedByUserId = "anonymous"
+            };
+
+            db.DiffReports.Add(report);
+            await db.SaveChangesAsync();
+
+            Nav.NavigateTo($"/projects/{ProjectId}/diffs/{report.Id}");
+        }
+        catch (Exception ex)
+        {
+            compareError = ex.Message;
+        }
+        finally
+        {
+            comparing = false;
+        }
+    }
+}

@@ -1,0 +1,181 @@
+@page "/projects/{ProjectId:guid}/rules"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Rules — OpenAPI Guard</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/">Projects</a> <span>/</span> @projectName
+</div>
+
+<div class="page-header">
+    <h2>@projectName</h2>
+</div>
+
+<div class="gh-tabs">
+    <a href="/projects/@ProjectId/specs">Specs</a>
+    <a href="/projects/@ProjectId/diffs">Diffs</a>
+    <a href="/projects/@ProjectId/rules" class="active">Rules</a>
+    <a href="/projects/@ProjectId/settings">Settings</a>
+</div>
+
+@if (saved)
+{
+    <div class="alert alert-success">Rules saved.</div>
+}
+
+<div class="gh-box" style="max-width: 700px;">
+    <div class="gh-box-header">Breaking change policy</div>
+
+    <div class="gh-checkbox">
+        <input type="checkbox" @bind="config.BlockRemovedEndpoints" />
+        <div>
+            <strong>Block removed endpoints</strong>
+            <div class="hint">Fail when an endpoint is removed between versions.</div>
+        </div>
+    </div>
+
+    <div class="gh-checkbox">
+        <input type="checkbox" @bind="config.BlockRemovedResponseFields" />
+        <div>
+            <strong>Block removed response fields</strong>
+            <div class="hint">Fail when a response field is removed.</div>
+        </div>
+    </div>
+
+    <div class="gh-checkbox">
+        <input type="checkbox" @bind="config.BlockTypeChanges" />
+        <div>
+            <strong>Block type changes</strong>
+            <div class="hint">Fail when a field's type changes (e.g. string → int).</div>
+        </div>
+    </div>
+
+    <div class="gh-checkbox">
+        <input type="checkbox" @bind="config.BlockOptionalToRequired" />
+        <div>
+            <strong>Block optional → required changes</strong>
+            <div class="hint">Fail when an optional field becomes required.</div>
+        </div>
+    </div>
+</div>
+
+<div class="gh-box mt-4" style="max-width: 700px;">
+    <div class="gh-box-header">API standards</div>
+
+    <div class="gh-checkbox">
+        <input type="checkbox" @bind="config.RequireAuthScheme" />
+        <div>
+            <strong>Require auth scheme</strong>
+            <div class="hint">Spec must define a security scheme (JWT/OAuth).</div>
+        </div>
+    </div>
+
+    <div class="gh-checkbox">
+        <input type="checkbox" @bind="config.Require4xx5xxResponses" />
+        <div>
+            <strong>Require 4xx and 5xx responses</strong>
+            <div class="hint">Every endpoint must document error responses.</div>
+        </div>
+    </div>
+
+    <div class="gh-checkbox">
+        <input type="checkbox" @bind="config.RequireOperationId" />
+        <div>
+            <strong>Require operationId</strong>
+            <div class="hint">Every operation must have a unique operationId.</div>
+        </div>
+    </div>
+
+    <div class="form-group mt-2">
+        <label>Naming convention</label>
+        <select class="form-control" @bind="config.NamingConvention" style="max-width: 200px;">
+            <option value="none">None</option>
+            <option value="camelCase">camelCase</option>
+            <option value="snake_case">snake_case</option>
+        </select>
+    </div>
+</div>
+
+<div class="mt-4">
+    <button class="btn btn-primary" @onclick="Save" disabled="@saving">
+        @(saving ? "Saving…" : "Save changes")
+    </button>
+</div>
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private string projectName = "…";
+    private RuleConfigModel config = new();
+    private bool saving;
+    private bool saved;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(ProjectId);
+        projectName = project?.Name ?? "Unknown";
+
+        var ruleSet = await db.RuleSets.FindAsync(ProjectId);
+        if (ruleSet is not null)
+        {
+            try
+            {
+                var parsed = System.Text.Json.JsonSerializer.Deserialize<RuleConfigModel>(
+                    ruleSet.JsonConfig,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (parsed is not null) config = parsed;
+            }
+            catch { }
+        }
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        saved = false;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var ruleSet = await db.RuleSets.FindAsync(ProjectId);
+            var json = System.Text.Json.JsonSerializer.Serialize(config);
+
+            if (ruleSet is null)
+            {
+                ruleSet = new RuleSet
+                {
+                    ProjectId = ProjectId,
+                    JsonConfig = json,
+                    UpdatedByUserId = "anonymous"
+                };
+                db.RuleSets.Add(ruleSet);
+            }
+            else
+            {
+                ruleSet.JsonConfig = json;
+                ruleSet.UpdatedAt = DateTimeOffset.UtcNow;
+                ruleSet.UpdatedByUserId = "anonymous";
+            }
+
+            await db.SaveChangesAsync();
+            saved = true;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private sealed class RuleConfigModel
+    {
+        public bool BlockRemovedEndpoints { get; set; } = true;
+        public bool BlockRemovedResponseFields { get; set; } = true;
+        public bool BlockTypeChanges { get; set; } = true;
+        public bool BlockOptionalToRequired { get; set; } = true;
+        public bool RequireAuthScheme { get; set; } = true;
+        public bool Require4xx5xxResponses { get; set; } = true;
+        public bool RequireOperationId { get; set; }
+        public string NamingConvention { get; set; } = "none";
+    }
+}

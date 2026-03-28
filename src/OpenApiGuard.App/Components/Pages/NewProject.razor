@@ -1,0 +1,75 @@
+@page "/projects/new"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
+
+<PageTitle>New project — OpenAPI Guard</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/">Projects</a> <span>/</span> New project
+</div>
+
+<div class="page-header">
+    <h1>Create a new project</h1>
+</div>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<div class="gh-box" style="max-width: 600px;">
+    <div class="form-group">
+        <label>Project name</label>
+        <input class="form-control" @bind="name" placeholder="e.g. Identity API" />
+    </div>
+
+    <div class="form-group">
+        <label>Description <span class="text-muted">(optional)</span></label>
+        <input class="form-control" @bind="description" placeholder="Short description of the API" />
+    </div>
+
+    <button class="btn btn-primary" @onclick="Create" disabled="@saving">
+        @(saving ? "Creating…" : "Create project")
+    </button>
+</div>
+
+@code {
+    private string name = "";
+    private string description = "";
+    private string? error;
+    private bool saving;
+
+    private async Task Create()
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            error = "Project name is required.";
+            return;
+        }
+
+        saving = true;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var project = new Project
+            {
+                Name = name.Trim(),
+                Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+                OwnerUserId = "anonymous" // MVP: no auth yet
+            };
+            db.Projects.Add(project);
+            await db.SaveChangesAsync();
+            Nav.NavigateTo($"/projects/{project.Id}/specs");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+}

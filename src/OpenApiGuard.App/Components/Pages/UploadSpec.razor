@@ -1,0 +1,121 @@
+@page "/projects/{ProjectId:guid}/specs/upload"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
+
+<PageTitle>Upload spec — OpenAPI Guard</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/">Projects</a> <span>/</span> <a href="/projects/@ProjectId/specs">@projectName</a> <span>/</span> Upload spec
+</div>
+
+<div class="page-header">
+    <h2>Upload OpenAPI spec</h2>
+</div>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<div class="gh-box" style="max-width: 800px;">
+    <div class="form-group">
+        <label>Version label</label>
+        <input class="form-control" @bind="label" placeholder="e.g. prod-2026-03-28, pr-54, v1.2.0" />
+        <div class="hint">A short identifier for this version of the spec.</div>
+    </div>
+
+    <div class="form-group">
+        <label>Format</label>
+        <select class="form-control" @bind="format" style="max-width: 200px;">
+            <option value="json">JSON</option>
+            <option value="yaml">YAML</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>OpenAPI v3 spec (paste)</label>
+        <textarea class="form-control" @bind="rawSpec" rows="18"
+                  placeholder='Paste your OpenAPI v3 JSON or YAML here…'></textarea>
+        <div class="hint">Only OpenAPI v3 is supported.</div>
+    </div>
+
+    <button class="btn btn-primary" @onclick="Upload" disabled="@saving">
+        @(saving ? "Uploading…" : "Upload spec")
+    </button>
+    <a href="/projects/@ProjectId/specs" class="btn" style="margin-left: 8px;">Cancel</a>
+</div>
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private string projectName = "…";
+    private string label = "";
+    private string format = "json";
+    private string rawSpec = "";
+    private string? error;
+    private bool saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(ProjectId);
+        projectName = project?.Name ?? "Unknown";
+    }
+
+    private async Task Upload()
+    {
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            error = "Version label is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(rawSpec))
+        {
+            error = "Spec content is required.";
+            return;
+        }
+
+        saving = true;
+        try
+        {
+            // Validate it's v3 and parseable
+            OpenApiDiffEngine.ValidateV3Only(rawSpec);
+
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var spec = new ApiSpecVersion
+            {
+                ProjectId = ProjectId,
+                Label = label.Trim(),
+                Source = "manual",
+                RawSpecText = rawSpec,
+                Format = format,
+                OpenApiVersion = "3",
+                UploadedByUserId = "anonymous"
+            };
+            db.ApiSpecVersions.Add(spec);
+
+            // Update project timestamp
+            var project = await db.Projects.FindAsync(ProjectId);
+            if (project is not null)
+            {
+                project.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+
+            await db.SaveChangesAsync();
+
+            Nav.NavigateTo($"/projects/{ProjectId}/specs");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+}

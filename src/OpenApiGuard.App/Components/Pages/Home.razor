@@ -1,0 +1,114 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Projects — OpenAPI Guard</PageTitle>
+
+<div class="page-header">
+    <h1>Projects</h1>
+    <a href="/projects/new" class="btn btn-primary">New project</a>
+</div>
+
+@if (projects is null)
+{
+    <p class="text-muted">Loading…</p>
+}
+else if (projects.Count == 0)
+{
+    <div class="empty-state">
+        <h3>No projects yet</h3>
+        <p>Create your first project to start tracking API changes.</p>
+        <a href="/projects/new" class="btn btn-primary mt-4">New project</a>
+    </div>
+}
+else
+{
+    <table class="gh-table">
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th>Specs</th>
+                <th>Last check</th>
+                <th>Status</th>
+                <th>Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in projects)
+            {
+                <tr>
+                    <td>
+                        <a href="/projects/@p.Id/specs" style="color: var(--color-accent); text-decoration: none; font-weight: 600;">
+                            @p.Name
+                        </a>
+                        @if (!string.IsNullOrEmpty(p.Description))
+                        {
+                            <span class="text-muted" style="margin-left: 8px;">@p.Description</span>
+                        }
+                    </td>
+                    <td>@p.SpecCount</td>
+                    <td class="text-muted">
+                        @if (p.LastDiffResult is not null)
+                        {
+                            @p.LastDiffLabel
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </td>
+                    <td>
+                        @if (p.LastDiffResult == "PASS")
+                        {
+                            <span class="badge badge-pass">Pass</span>
+                        }
+                        else if (p.LastDiffResult == "FAIL")
+                        {
+                            <span class="badge badge-fail">Fail (@p.LastBreakingCount)</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-muted">—</span>
+                        }
+                    </td>
+                    <td class="text-muted">@p.UpdatedAt.ToString("MMM dd")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ProjectRow>? projects;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        projects = await db.Projects
+            .OrderByDescending(p => p.UpdatedAt)
+            .Select(p => new ProjectRow
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                UpdatedAt = p.UpdatedAt,
+                SpecCount = p.Specs.Count,
+                LastDiffResult = p.Diffs.OrderByDescending(d => d.CreatedAt).Select(d => d.BreakingCount > 0 ? "FAIL" : "PASS").FirstOrDefault(),
+                LastBreakingCount = p.Diffs.OrderByDescending(d => d.CreatedAt).Select(d => d.BreakingCount).FirstOrDefault(),
+                LastDiffLabel = null
+            })
+            .ToListAsync();
+    }
+
+    private sealed class ProjectRow
+    {
+        public Guid Id { get; init; }
+        public string Name { get; init; } = "";
+        public string? Description { get; init; }
+        public DateTimeOffset UpdatedAt { get; init; }
+        public int SpecCount { get; init; }
+        public string? LastDiffResult { get; init; }
+        public int LastBreakingCount { get; init; }
+        public string? LastDiffLabel { get; init; }
+    }
+}

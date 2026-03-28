@@ -1,0 +1,143 @@
+@page "/projects/{ProjectId:guid}/settings"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Settings — OpenAPI Guard</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/">Projects</a> <span>/</span> @projectName
+</div>
+
+<div class="page-header">
+    <h2>@projectName</h2>
+</div>
+
+<div class="gh-tabs">
+    <a href="/projects/@ProjectId/specs">Specs</a>
+    <a href="/projects/@ProjectId/diffs">Diffs</a>
+    <a href="/projects/@ProjectId/rules">Rules</a>
+    <a href="/projects/@ProjectId/settings" class="active">Settings</a>
+</div>
+
+@if (saved)
+{
+    <div class="alert alert-success">Settings saved.</div>
+}
+
+<div class="gh-box" style="max-width: 700px;">
+    <div class="gh-box-header">General</div>
+
+    <div class="form-group">
+        <label>Project name</label>
+        <input class="form-control" @bind="name" />
+    </div>
+
+    <div class="form-group">
+        <label>Description</label>
+        <input class="form-control" @bind="description" />
+    </div>
+</div>
+
+<div class="gh-box mt-4" style="max-width: 700px;">
+    <div class="gh-box-header">GitHub repository link</div>
+
+    <div class="form-group">
+        <label>Repository URL</label>
+        <input class="form-control" @bind="repoUrl" placeholder="https://github.com/org/repo" />
+        <div class="hint">Stored for reference. No validation or fetching in this version.</div>
+    </div>
+
+    <div class="form-group">
+        <label>Default branch</label>
+        <input class="form-control" @bind="defaultBranch" placeholder="main" style="max-width: 300px;" />
+    </div>
+
+    <div class="form-group">
+        <label>OpenAPI spec hint</label>
+        <input class="form-control" @bind="specHint" placeholder="/swagger/v1/swagger.json or docs/openapi.yaml" />
+        <div class="hint">Where the OpenAPI spec lives in the repo (used later for auto-fetch).</div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <button class="btn btn-primary" @onclick="Save" disabled="@saving">
+        @(saving ? "Saving…" : "Save changes")
+    </button>
+</div>
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private string projectName = "…";
+    private string name = "";
+    private string description = "";
+    private string repoUrl = "";
+    private string defaultBranch = "main";
+    private string specHint = "";
+    private bool saving;
+    private bool saved;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var project = await db.Projects.Include(p => p.RepoLink).FirstOrDefaultAsync(p => p.Id == ProjectId);
+        if (project is null) return;
+
+        projectName = project.Name;
+        name = project.Name;
+        description = project.Description ?? "";
+
+        if (project.RepoLink is not null)
+        {
+            repoUrl = project.RepoLink.RepoUrl;
+            defaultBranch = project.RepoLink.DefaultBranch;
+            specHint = project.RepoLink.OpenApiSpecHint ?? "";
+        }
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        saved = false;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var project = await db.Projects.Include(p => p.RepoLink).FirstOrDefaultAsync(p => p.Id == ProjectId);
+            if (project is null) return;
+
+            project.Name = name.Trim();
+            project.Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+            project.UpdatedAt = DateTimeOffset.UtcNow;
+            projectName = project.Name;
+
+            if (!string.IsNullOrWhiteSpace(repoUrl))
+            {
+                if (project.RepoLink is null)
+                {
+                    project.RepoLink = new ProjectRepoLink
+                    {
+                        ProjectId = ProjectId,
+                        Provider = "github",
+                        RepoUrl = repoUrl.Trim(),
+                        DefaultBranch = defaultBranch.Trim(),
+                        OpenApiSpecHint = string.IsNullOrWhiteSpace(specHint) ? null : specHint.Trim()
+                    };
+                }
+                else
+                {
+                    project.RepoLink.RepoUrl = repoUrl.Trim();
+                    project.RepoLink.DefaultBranch = defaultBranch.Trim();
+                    project.RepoLink.OpenApiSpecHint = string.IsNullOrWhiteSpace(specHint) ? null : specHint.Trim();
+                    project.RepoLink.UpdatedAt = DateTimeOffset.UtcNow;
+                }
+            }
+
+            await db.SaveChangesAsync();
+            saved = true;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+}

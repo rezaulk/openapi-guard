@@ -1,0 +1,115 @@
+@page "/projects/{ProjectId:guid}/diffs"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Diffs — OpenAPI Guard</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/">Projects</a> <span>/</span> @projectName
+</div>
+
+<div class="page-header">
+    <h2>@projectName</h2>
+</div>
+
+<div class="gh-tabs">
+    <a href="/projects/@ProjectId/specs">Specs</a>
+    <a href="/projects/@ProjectId/diffs" class="active">Diffs</a>
+    <a href="/projects/@ProjectId/rules">Rules</a>
+    <a href="/projects/@ProjectId/settings">Settings</a>
+</div>
+
+@if (diffs is null)
+{
+    <p class="text-muted">Loading…</p>
+}
+else if (diffs.Count == 0)
+{
+    <div class="empty-state">
+        <h3>No diffs yet</h3>
+        <p>Compare two spec versions to create a diff report.</p>
+    </div>
+}
+else
+{
+    <table class="gh-table">
+        <thead>
+            <tr>
+                <th>Diff</th>
+                <th>Status</th>
+                <th>Breaking</th>
+                <th>Warnings</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in diffs)
+            {
+                <tr>
+                    <td>
+                        <a href="/projects/@ProjectId/diffs/@d.Id" style="color: var(--color-accent); text-decoration: none;">
+                            @d.FromLabel → @d.ToLabel
+                        </a>
+                    </td>
+                    <td>
+                        @if (d.BreakingCount > 0)
+                        {
+                            <span class="badge badge-fail">Fail</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-pass">Pass</span>
+                        }
+                    </td>
+                    <td>@d.BreakingCount</td>
+                    <td>@d.WarningCount</td>
+                    <td class="text-muted">@d.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private string projectName = "…";
+    private List<DiffRow>? diffs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(ProjectId);
+        projectName = project?.Name ?? "Unknown";
+
+        var reports = await db.DiffReports
+            .Where(d => d.ProjectId == ProjectId)
+            .OrderByDescending(d => d.CreatedAt)
+            .ToListAsync();
+
+        var specIds = reports.SelectMany(r => new[] { r.FromSpecId, r.ToSpecId }).Distinct().ToList();
+        var specLabels = await db.ApiSpecVersions
+            .Where(s => specIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, s => s.Label);
+
+        diffs = reports.Select(r => new DiffRow
+        {
+            Id = r.Id,
+            FromLabel = specLabels.GetValueOrDefault(r.FromSpecId, "?"),
+            ToLabel = specLabels.GetValueOrDefault(r.ToSpecId, "?"),
+            BreakingCount = r.BreakingCount,
+            WarningCount = r.WarningCount,
+            CreatedAt = r.CreatedAt
+        }).ToList();
+    }
+
+    private sealed class DiffRow
+    {
+        public Guid Id { get; init; }
+        public string FromLabel { get; init; } = "";
+        public string ToLabel { get; init; } = "";
+        public int BreakingCount { get; init; }
+        public int WarningCount { get; init; }
+        public DateTimeOffset CreatedAt { get; init; }
+    }
+}

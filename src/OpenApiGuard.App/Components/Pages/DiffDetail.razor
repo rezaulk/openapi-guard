@@ -1,0 +1,146 @@
+@page "/projects/{ProjectId:guid}/diffs/{DiffId:guid}"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Diff Report — OpenAPI Guard</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/">Projects</a>
+    <span>/</span>
+    <a href="/projects/@ProjectId/specs">@projectName</a>
+    <span>/</span>
+    <a href="/projects/@ProjectId/diffs">Diffs</a>
+    <span>/</span>
+    @fromLabel → @toLabel
+</div>
+
+@if (report is null)
+{
+    <p class="text-muted">Loading…</p>
+}
+else
+{
+    <div class="page-header">
+        <div>
+            <h2>@fromLabel → @toLabel</h2>
+            <div class="text-muted">Created @report.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+        </div>
+        <div>
+            @if (report.BreakingCount > 0)
+            {
+                <span class="badge badge-fail" style="font-size: 14px; padding: 4px 12px;">FAIL</span>
+            }
+            else
+            {
+                <span class="badge badge-pass" style="font-size: 14px; padding: 4px 12px;">PASS</span>
+            }
+        </div>
+    </div>
+
+    <div class="summary-box">
+        <div class="summary-stat">
+            <div class="number text-danger">@report.BreakingCount</div>
+            <div class="label">Breaking</div>
+        </div>
+        <div class="summary-stat">
+            <div class="number" style="color: var(--color-warning);">@report.WarningCount</div>
+            <div class="label">Warnings</div>
+        </div>
+        <div class="summary-stat">
+            <div class="number" style="color: var(--color-accent);">@report.InfoCount</div>
+            <div class="label">Info</div>
+        </div>
+    </div>
+
+    <div class="gh-tabs">
+        <button class="@(filter == "all" ? "active" : "")" @onclick='() => filter = "all"'>
+            All changes (@items.Count)
+        </button>
+        <button class="@(filter == "breaking" ? "active" : "")" @onclick='() => filter = "breaking"'>
+            Breaking (@report.BreakingCount)
+        </button>
+        <button class="@(filter == "warning" ? "active" : "")" @onclick='() => filter = "warning"'>
+            Warnings (@report.WarningCount)
+        </button>
+        <button class="@(filter == "info" ? "active" : "")" @onclick='() => filter = "info"'>
+            Info (@report.InfoCount)
+        </button>
+    </div>
+
+    @foreach (var item in FilteredItems)
+    {
+        <div class="diff-item @item.Severity">
+            <div class="d-flex justify-between align-center">
+                <span class="kind">@item.Kind.Replace("_", " ")</span>
+                <span class="badge @BadgeClass(item.Severity)">@item.Severity</span>
+            </div>
+            <div class="target">@item.Target</div>
+            <div class="message">@item.Message</div>
+        </div>
+    }
+
+    @if (!FilteredItems.Any())
+    {
+        <div class="empty-state">
+            <p>No items matching this filter.</p>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public Guid DiffId { get; set; }
+
+    private string projectName = "…";
+    private string fromLabel = "";
+    private string toLabel = "";
+    private DiffReport? report;
+    private List<DiffItemView> items = [];
+    private string filter = "all";
+
+    private IEnumerable<DiffItemView> FilteredItems =>
+        filter == "all" ? items : items.Where(i => i.Severity == filter);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(ProjectId);
+        projectName = project?.Name ?? "Unknown";
+
+        report = await db.DiffReports.FindAsync(DiffId);
+        if (report is null) return;
+
+        var fromSpec = await db.ApiSpecVersions.FindAsync(report.FromSpecId);
+        var toSpec = await db.ApiSpecVersions.FindAsync(report.ToSpecId);
+        fromLabel = fromSpec?.Label ?? "?";
+        toLabel = toSpec?.Label ?? "?";
+
+        try
+        {
+            var parsed = System.Text.Json.JsonSerializer.Deserialize<List<DiffItemView>>(
+                report.SummaryJson,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            items = parsed ?? [];
+        }
+        catch
+        {
+            items = [];
+        }
+    }
+
+    private static string BadgeClass(string severity) => severity switch
+    {
+        "breaking" => "badge-fail",
+        "warning" => "badge-warning",
+        "info" => "badge-info",
+        _ => "badge-muted"
+    };
+
+    private sealed class DiffItemView
+    {
+        public string Severity { get; set; } = "";
+        public string Kind { get; set; } = "";
+        public string Target { get; set; } = "";
+        public string Message { get; set; } = "";
+    }
+}
