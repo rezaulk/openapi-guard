@@ -18,9 +18,12 @@ public static class DependencyInjection
         services.AddDbContextFactory<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        // Also register scoped DbContext for Identity
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString), ServiceLifetime.Scoped);
+        // Register scoped DbContext resolved from the factory (needed by Identity)
+        services.AddScoped(sp =>
+            sp.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext());
+
+        services.AddAuthentication(IdentityConstants.ApplicationScheme)
+            .AddCookie(IdentityConstants.ApplicationScheme);
 
         services.AddIdentityCore<IdentityUser>(options =>
         {

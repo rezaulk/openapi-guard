@@ -1,81 +1,94 @@
-﻿@page "/"
+﻿@page "/projects"
 @rendermode InteractiveServer
 @inject IDbContextFactory<AppDbContext> DbFactory
 
 <PageTitle>Projects — OpenAPI Guard</PageTitle>
 
 <div class="page-header">
-    <h1>Projects</h1>
-    <a href="/projects/new" class="btn btn-primary">New project</a>
+    <div>
+        <h1>Projects</h1>
+        <p class="text-muted" style="margin: 4px 0 0;">Monitor your APIs and catch breaking changes before they ship.</p>
+    </div>
+    <a href="/projects/new" class="btn btn-primary btn-lg">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/></svg>
+        New project
+    </a>
 </div>
 
 @if (projects is null)
 {
-    <p class="text-muted">Loading…</p>
+    <div class="empty-state">
+        <div class="loading-pulse"></div>
+        <p>Loading projects…</p>
+    </div>
 }
 else if (projects.Count == 0)
 {
-    <div class="empty-state">
+    <div class="empty-state-hero">
+        <div class="empty-state-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/>
+                <path d="M12 7l-5 2.5v5L12 17l5-2.5v-5L12 7z" fill="currentColor" opacity="0.1" stroke="none"/>
+                <path d="M12 7v10M7 9.5l5 2.5 5-2.5"/>
+            </svg>
+        </div>
         <h3>No projects yet</h3>
-        <p>Create your first project to start tracking API changes.</p>
-        <a href="/projects/new" class="btn btn-primary mt-4">New project</a>
+        <p>Create your first project to start tracking OpenAPI spec changes and catching breaking changes automatically.</p>
+        <a href="/projects/new" class="btn btn-primary btn-lg mt-6">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/></svg>
+            Create your first project
+        </a>
     </div>
 }
 else
 {
-    <table class="gh-table">
-        <thead>
-            <tr>
-                <th>Project</th>
-                <th>Specs</th>
-                <th>Last check</th>
-                <th>Status</th>
-                <th>Updated</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var p in projects)
-            {
-                <tr>
-                    <td>
-                        <a href="/projects/@p.Id/specs" style="color: var(--color-accent); text-decoration: none; font-weight: 600;">
-                            @p.Name
-                        </a>
-                        @if (!string.IsNullOrEmpty(p.Description))
-                        {
-                            <span class="text-muted" style="margin-left: 8px;">@p.Description</span>
-                        }
-                    </td>
-                    <td>@p.SpecCount</td>
-                    <td class="text-muted">
-                        @if (p.LastDiffResult is not null)
-                        {
-                            @p.LastDiffLabel
-                        }
-                        else
-                        {
-                            <span>—</span>
-                        }
-                    </td>
-                    <td>
-                        @if (p.LastDiffResult == "PASS")
-                        {
-                            <span class="badge badge-pass">Pass</span>
-                        }
-                        else if (p.LastDiffResult == "FAIL")
-                        {
-                            <span class="badge badge-fail">Fail (@p.LastBreakingCount)</span>
-                        }
-                        else
-                        {
-                            <span class="badge badge-muted">—</span>
-                        }
-                    </td>
-                    <td class="text-muted">@p.UpdatedAt.ToString("MMM dd")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="project-grid">
+        @foreach (var p in projects)
+        {
+            <a href="/projects/@p.Id/specs" class="project-card">
+                <div class="project-card-header">
+                    <div class="project-card-icon">
+                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/></svg>
+                    </div>
+                    @if (p.LastDiffResult == "PASS")
+                    {
+                        <span class="badge badge-pass">Pass</span>
+                    }
+                    else if (p.LastDiffResult == "FAIL")
+                    {
+                        <span class="badge badge-fail">Fail</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-muted">No checks</span>
+                    }
+                </div>
+                <div class="project-card-body">
+                    <h3>@p.Name</h3>
+                    @if (!string.IsNullOrEmpty(p.Description))
+                    {
+                        <p class="project-card-desc">@p.Description</p>
+                    }
+                </div>
+                <div class="project-card-footer">
+                    <div class="project-card-stat">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0H4Zm5.5 1.5 3 3H10a.5.5 0 0 1-.5-.5V1.5ZM4 1h5v3a1.5 1.5 0 0 0 1.5 1.5H13v8.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V2a1 1 0 0 1 1-1Z"/></svg>
+                        @p.SpecCount specs
+                    </div>
+                    @if (p.LastBreakingCount > 0)
+                    {
+                        <div class="project-card-stat text-danger">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707L2.138 13.131a.25.25 0 0 0 .22.369h12.284a.25.25 0 0 0 .22-.369L8.78 1.754a.25.25 0 0 0-.44 0l.12-.001ZM8 5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5A.75.75 0 0 1 8 5Zm0 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>
+                            @p.LastBreakingCount breaking
+                        </div>
+                    }
+                    <div class="project-card-stat" style="margin-left: auto;">
+                        @p.UpdatedAt.ToString("MMM dd")
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
 }
 
 @code {

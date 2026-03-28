@@ -23,16 +23,25 @@ else
     <div class="page-header">
         <div>
             <h2>@fromLabel → @toLabel</h2>
-            <div class="text-muted">Created @report.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+            <div class="text-muted" style="margin-top: 2px;">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: -2px; margin-right: 4px;"><path d="M4.75 0a.75.75 0 0 1 .75.75V2h5V.75a.75.75 0 0 1 1.5 0V2h1.25c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 13.25 16H2.75A1.75 1.75 0 0 1 1 14.25V3.75C1 2.784 1.784 2 2.75 2H4V.75A.75.75 0 0 1 4.75 0ZM2.5 7.5v6.75c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25V7.5Zm10.75-4H2.75a.25.25 0 0 0-.25.25V6h11V3.75a.25.25 0 0 0-.25-.25Z"/></svg>
+                @report.CreatedAt.ToString("MMMM dd, yyyy  ·  HH:mm")
+            </div>
         </div>
         <div>
             @if (report.BreakingCount > 0)
             {
-                <span class="badge badge-fail" style="font-size: 14px; padding: 4px 12px;">FAIL</span>
+                <span class="badge badge-fail" style="font-size: 14px; padding: 6px 16px; font-weight: 700;">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="margin-right: 2px;"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>
+                    FAIL
+                </span>
             }
             else
             {
-                <span class="badge badge-pass" style="font-size: 14px; padding: 4px 12px;">PASS</span>
+                <span class="badge badge-pass" style="font-size: 14px; padding: 6px 16px; font-weight: 700;">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="margin-right: 2px;"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>
+                    PASS
+                </span>
             }
         </div>
     </div>

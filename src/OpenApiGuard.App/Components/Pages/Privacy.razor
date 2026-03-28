@@ -1,0 +1,203 @@
+@page "/privacy"
+
+<PageTitle>Privacy Policy — OpenAPI Guard</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/">Home</a> <span>/</span> Privacy Policy
+</div>
+
+<div class="page-header">
+    <div>
+        <h1>Privacy Policy</h1>
+        <p class="text-muted" style="margin: 4px 0 0;">Last updated: March 29, 2026</p>
+    </div>
+</div>
+
+<div class="docs-grid">
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: -2px; margin-right: 6px;"><path d="M9.504.43a1.516 1.516 0 0 1 2.437 1.713L10.415 5.5h2.835c1.112 0 1.733 1.307 1.024 2.153l-6.38 7.615a1.516 1.516 0 0 1-2.67-1.403l1.484-5.443H3.91c-1.112 0-1.733-1.307-1.024-2.153L9.504.43Z"/></svg>
+                Introduction
+            </div>
+            <div class="docs-block">
+                <p>OpenAPI Guard ("we", "our", or "the Service") is committed to protecting the privacy of individuals and organizations who use our API contract governance tools. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our cloud-hosted service or self-hosted software.</p>
+                <p>By using OpenAPI Guard, you agree to the collection and use of information in accordance with this policy. If you do not agree, please discontinue use of the Service.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">1. Information We Collect</div>
+            <div class="docs-block">
+                <h3>Account Information</h3>
+                <ul>
+                    <li><strong>Email address</strong> — used for authentication, account recovery, and essential service notifications.</li>
+                    <li><strong>Display name</strong> — used to personalize your experience within the application.</li>
+                    <li><strong>Password hash</strong> — passwords are hashed using industry-standard algorithms. We never store plaintext passwords.</li>
+                </ul>
+
+                <h3>API Specifications</h3>
+                <ul>
+                    <li><strong>Uploaded OpenAPI specs</strong> — stored to enable version comparison and diff reporting. Specs may contain endpoint paths, schema definitions, and descriptions from your API documentation.</li>
+                    <li><strong>Diff reports</strong> — generated comparisons between spec versions are stored for your review.</li>
+                </ul>
+
+                <h3>Usage Data</h3>
+                <ul>
+                    <li><strong>Log data</strong> — IP address, browser type, pages visited, and timestamps are collected for security monitoring and service improvement.</li>
+                    <li><strong>Feature usage</strong> — aggregated, anonymized data about which features are used to inform product development.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">2. How We Use Your Information</div>
+            <div class="docs-block">
+                <p>We use the collected information for the following purposes:</p>
+                <table class="gh-table">
+                    <thead>
+                        <tr><th>Purpose</th><th>Legal Basis</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Provide and maintain the Service</td><td>Contract performance</td></tr>
+                        <tr><td>Authenticate users and manage sessions</td><td>Contract performance</td></tr>
+                        <tr><td>Generate diff reports from uploaded specs</td><td>Contract performance</td></tr>
+                        <tr><td>Send service-critical notifications</td><td>Legitimate interest</td></tr>
+                        <tr><td>Monitor and prevent abuse or security threats</td><td>Legitimate interest</td></tr>
+                        <tr><td>Improve features based on aggregated usage data</td><td>Legitimate interest</td></tr>
+                        <tr><td>Respond to support requests</td><td>Contract performance</td></tr>
+                    </tbody>
+                </table>
+                <div class="docs-callout docs-callout-info">
+                    <strong>We do not:</strong> sell your data to third parties, use your API specs for training AI models, or share your data with advertisers.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">3. Data Storage &amp; Security</div>
+            <div class="docs-block">
+                <h3>Cloud-Hosted Service</h3>
+                <ul>
+                    <li>Data is stored in PostgreSQL databases hosted on encrypted volumes.</li>
+                    <li>All data in transit is encrypted via TLS 1.2+.</li>
+                    <li>Database backups are encrypted at rest and retained for 30 days.</li>
+                    <li>Access to production systems is restricted to authorized personnel with multi-factor authentication.</li>
+                </ul>
+
+                <h3>Self-Hosted Deployments</h3>
+                <ul>
+                    <li>When you self-host OpenAPI Guard, all data remains on your infrastructure.</li>
+                    <li>We do not collect, transmit, or have access to any data from self-hosted instances.</li>
+                    <li>You are responsible for your own backup, encryption, and access control policies.</li>
+                </ul>
+
+                <div class="docs-callout docs-callout-warning">
+                    <strong>Security incident?</strong> If you discover a security vulnerability, please report it to <strong>security@@openapiguard.dev</strong>. Do not open a public GitHub issue.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">4. Data Retention</div>
+            <div class="docs-block">
+                <table class="gh-table">
+                    <thead>
+                        <tr><th>Data Type</th><th>Retention Period</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Account information</td><td>Until account deletion</td></tr>
+                        <tr><td>Uploaded API specs</td><td>Until deleted by user or project deletion</td></tr>
+                        <tr><td>Diff reports</td><td>Until deleted by user or project deletion</td></tr>
+                        <tr><td>Server logs</td><td>90 days</td></tr>
+                        <tr><td>Aggregated analytics</td><td>Indefinite (anonymized)</td></tr>
+                    </tbody>
+                </table>
+                <p>When you delete a project, all associated specs, diffs, and rules are permanently removed within 30 days. Account deletion removes all personal data within 30 days.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">5. Cookies &amp; Tracking</div>
+            <div class="docs-block">
+                <p>OpenAPI Guard uses only <strong>essential cookies</strong> required for the Service to function:</p>
+                <table class="gh-table">
+                    <thead>
+                        <tr><th>Cookie</th><th>Purpose</th><th>Duration</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>.AspNetCore.Identity.Application</code></td><td>Authentication session</td><td>Session / 14 days</td></tr>
+                        <tr><td><code>.AspNetCore.Antiforgery.*</code></td><td>CSRF protection</td><td>Session</td></tr>
+                    </tbody>
+                </table>
+                <p>We do <strong>not</strong> use analytics cookies, advertising trackers, or third-party tracking pixels.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">6. Third-Party Services</div>
+            <div class="docs-block">
+                <p>The cloud-hosted Service may use the following third-party providers:</p>
+                <ul>
+                    <li><strong>Cloud infrastructure</strong> — for hosting and database services (encrypted at rest and in transit).</li>
+                    <li><strong>Transactional email</strong> — for sending account-related emails (email address only).</li>
+                    <li><strong>GitHub OAuth</strong> — optional, for GitHub-based login (we receive only your public profile and email).</li>
+                </ul>
+                <p>We do not share your API specifications or diff reports with any third party.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">7. Your Rights</div>
+            <div class="docs-block">
+                <p>Depending on your jurisdiction, you may have the following rights:</p>
+                <ul>
+                    <li><strong>Access</strong> — Request a copy of the personal data we hold about you.</li>
+                    <li><strong>Rectification</strong> — Correct inaccurate personal data.</li>
+                    <li><strong>Erasure</strong> — Request deletion of your account and associated data.</li>
+                    <li><strong>Portability</strong> — Export your projects, specs, and reports in standard formats.</li>
+                    <li><strong>Restriction</strong> — Request that we limit processing of your data.</li>
+                    <li><strong>Objection</strong> — Object to processing based on legitimate interest.</li>
+                </ul>
+                <p>To exercise any of these rights, contact us at <strong>privacy@@openapiguard.dev</strong>. We will respond within 30 days.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">8. Changes to This Policy</div>
+            <div class="docs-block">
+                <p>We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated "Last updated" date. For significant changes, we will notify registered users via email.</p>
+                <p>Continued use of the Service after changes constitutes acceptance of the updated policy.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">9. Contact</div>
+            <div class="docs-block">
+                <p>For questions about this Privacy Policy or our data practices:</p>
+                <ul>
+                    <li><strong>Email:</strong> privacy@@openapiguard.dev</li>
+                    <li><strong>GitHub:</strong> github.com/rezaulk/openapi-guard</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

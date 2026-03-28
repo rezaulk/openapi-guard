@@ -1,0 +1,296 @@
+@page "/api-docs"
+
+<PageTitle>API Reference — OpenAPI Guard</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/">Home</a> <span>/</span> API Reference
+</div>
+
+<div class="page-header">
+    <div>
+        <h1>API Reference</h1>
+        <p class="text-muted" style="margin: 4px 0 0;">Integrate OpenAPI Guard into your CI/CD pipeline and automation workflows.</p>
+    </div>
+</div>
+
+<div class="docs-grid">
+    <!-- Overview -->
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: -2px; margin-right: 6px;"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25ZM3 3.75A.75.75 0 0 1 3.75 3h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 3 3.75ZM6.25 3a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5ZM3 7.75A.75.75 0 0 1 3.75 7h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 3 7.75ZM6.25 7a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5ZM3 11.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM6.25 11a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5Z"/></svg>
+                Overview
+            </div>
+
+            <div class="docs-block">
+                <h3>Base URL</h3>
+                <div class="docs-code">
+                    <code>https://your-instance.com/api</code>
+                </div>
+                <p>All API endpoints are prefixed with <code>/api</code>. When self-hosting, replace the domain with your server address.</p>
+            </div>
+
+            <div class="docs-block">
+                <h3>Authentication</h3>
+                <p>The API will use Bearer token authentication. Include the token in the <code>Authorization</code> header:</p>
+                <div class="docs-code">
+                    <code>Authorization: Bearer &lt;your-api-token&gt;</code>
+                </div>
+                <div class="docs-callout docs-callout-warning">
+                    <strong>MVP Note:</strong> Authentication is not yet enforced in the current MVP. All endpoints are publicly accessible during development.
+                </div>
+            </div>
+
+            <div class="docs-block">
+                <h3>Response Format</h3>
+                <p>All responses are returned as JSON with the following standard envelope:</p>
+                <div class="docs-code">
+<pre>{
+  "data": { ... },
+  "error": null,
+  "timestamp": "2026-03-29T12:00:00Z"
+}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects -->
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">Projects</div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-get">GET</div>
+                <code>/api/projects</code>
+                <p>List all projects for the authenticated user.</p>
+            </div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-post">POST</div>
+                <code>/api/projects</code>
+                <p>Create a new project.</p>
+                <div class="docs-code">
+<pre>{
+  "name": "Identity API",
+  "description": "Authentication and user management"
+}</pre>
+                </div>
+            </div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-get">GET</div>
+                <code>/api/projects/{id}</code>
+                <p>Get a single project by ID.</p>
+            </div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-put">PUT</div>
+                <code>/api/projects/{id}</code>
+                <p>Update project name or description.</p>
+            </div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-delete">DEL</div>
+                <code>/api/projects/{id}</code>
+                <p>Delete a project and all associated specs, diffs, and rules.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Specs -->
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">Spec Versions</div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-get">GET</div>
+                <code>/api/projects/{id}/specs</code>
+                <p>List all spec versions for a project, ordered by upload date.</p>
+            </div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-post">POST</div>
+                <code>/api/projects/{id}/specs</code>
+                <p>Upload a new spec version. Accepts raw OpenAPI v3 JSON or YAML.</p>
+                <div class="docs-code">
+<pre>{
+  "label": "v2.0.0",
+  "format": "json",
+  "rawSpec": "{ \"openapi\": \"3.0.3\", ... }"
+}</pre>
+                </div>
+            </div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-get">GET</div>
+                <code>/api/projects/{id}/specs/{specId}</code>
+                <p>Get a single spec version including the raw spec text.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diffs -->
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">Diff Reports</div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-post">POST</div>
+                <code>/api/projects/{id}/diffs</code>
+                <p>Create a new diff report by comparing two spec versions.</p>
+                <div class="docs-code">
+<pre>{
+  "fromSpecId": "guid-of-older-spec",
+  "toSpecId": "guid-of-newer-spec"
+}</pre>
+                </div>
+                <p>Returns the full diff report including all detected changes with severity levels.</p>
+            </div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-get">GET</div>
+                <code>/api/projects/{id}/diffs</code>
+                <p>List all diff reports for a project.</p>
+            </div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-get">GET</div>
+                <code>/api/projects/{id}/diffs/{diffId}</code>
+                <p>Get a single diff report with full change details.</p>
+                <h4 style="margin-top: 12px;">Response</h4>
+                <div class="docs-code">
+<pre>{
+  "id": "guid",
+  "fromSpecId": "guid",
+  "toSpecId": "guid",
+  "breakingCount": 3,
+  "warningCount": 1,
+  "infoCount": 2,
+  "result": "FAIL",
+  "items": [
+    {
+      "severity": "breaking",
+      "kind": "endpoint_removed",
+      "target": "POST /pets",
+      "message": "Endpoint removed"
+    }
+  ],
+  "createdAt": "2026-03-29T12:00:00Z"
+}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules -->
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">Rules</div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-get">GET</div>
+                <code>/api/projects/{id}/rules</code>
+                <p>Get the current rule configuration for a project.</p>
+            </div>
+
+            <div class="docs-endpoint">
+                <div class="docs-method docs-method-put">PUT</div>
+                <code>/api/projects/{id}/rules</code>
+                <p>Update the rule configuration.</p>
+                <div class="docs-code">
+<pre>{
+  "blockRemovedEndpoints": true,
+  "blockRemovedResponseFields": true,
+  "blockTypeChanges": true,
+  "blockOptionalToRequired": true,
+  "requireAuthScheme": false,
+  "require4xx5xxResponses": true,
+  "requireOperationId": false,
+  "namingConvention": "camelCase"
+}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CI/CD -->
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: -2px; margin-right: 6px;"><path d="M5.75 7.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5a.75.75 0 0 1 .75-.75Zm5.25.75a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5Z"/><path d="M6.25 0a.75.75 0 0 0 0 1.5H7.5v2H3.75A2.25 2.25 0 0 0 1.5 5.75V8H.75a.75.75 0 0 0 0 1.5h.75v2.75a2.25 2.25 0 0 0 2.25 2.25h8.5a2.25 2.25 0 0 0 2.25-2.25V9.5h.75a.75.75 0 0 0 0-1.5h-.75V5.75A2.25 2.25 0 0 0 12.25 3.5H9V1.5h1.25a.75.75 0 0 0 0-1.5h-4ZM3 5.75A.75.75 0 0 1 3.75 5h8.5a.75.75 0 0 1 .75.75v6.5a.75.75 0 0 1-.75.75h-8.5a.75.75 0 0 1-.75-.75v-6.5Z"/></svg>
+                CI/CD Integration
+            </div>
+
+            <div class="docs-block">
+                <h3>GitHub Actions Example</h3>
+                <p>Use the API to check for breaking changes in your CI pipeline:</p>
+                <div class="docs-code">
+<pre>- name: Upload spec &amp; check for breaking changes
+  run: |
+    # Upload current spec
+    SPEC_ID=$(curl -s -X POST \
+      "$GUARD_URL/api/projects/$PROJECT_ID/specs" \
+      -H "Authorization: Bearer $API_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "{\"label\":\"pr-$PR_NUMBER\",\"format\":\"json\",\"rawSpec\":$(cat openapi.json | jq -Rs .)}" \
+      | jq -r '.data.id')
+
+    # Compare against baseline
+    RESULT=$(curl -s -X POST \
+      "$GUARD_URL/api/projects/$PROJECT_ID/diffs" \
+      -H "Authorization: Bearer $API_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "{\"fromSpecId\":\"$BASELINE_SPEC_ID\",\"toSpecId\":\"$SPEC_ID\"}" \
+      | jq -r '.data.result')
+
+    if [ "$RESULT" = "FAIL" ]; then
+      echo "::error::Breaking API changes detected!"
+      exit 1
+    fi</pre>
+                </div>
+            </div>
+
+            <div class="docs-block">
+                <h3>Rate Limits</h3>
+                <table class="gh-table">
+                    <thead>
+                        <tr><th>Plan</th><th>Requests / min</th><th>Projects</th><th>Specs / project</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Free</strong></td><td>30</td><td>3</td><td>20</td></tr>
+                        <tr><td><strong>Pro</strong></td><td>120</td><td>25</td><td>100</td></tr>
+                        <tr><td><strong>Enterprise</strong></td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+                        <tr><td><strong>Self-hosted</strong></td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-muted" style="font-size: 12px; margin-top: 8px;">Rate limits are not enforced in the MVP.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Codes -->
+    <div class="docs-section">
+        <div class="gh-box">
+            <div class="gh-box-header">Error Codes</div>
+
+            <div class="docs-block">
+                <table class="gh-table">
+                    <thead>
+                        <tr><th>Code</th><th>Meaning</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>400</code></td><td>Bad request — Invalid input or malformed spec</td></tr>
+                        <tr><td><code>401</code></td><td>Unauthorized — Missing or invalid API token</td></tr>
+                        <tr><td><code>403</code></td><td>Forbidden — Insufficient permissions</td></tr>
+                        <tr><td><code>404</code></td><td>Not found — Project, spec, or diff not found</td></tr>
+                        <tr><td><code>409</code></td><td>Conflict — Duplicate version label</td></tr>
+                        <tr><td><code>422</code></td><td>Unprocessable — Spec is not valid OpenAPI v3</td></tr>
+                        <tr><td><code>429</code></td><td>Too many requests — Rate limit exceeded</td></tr>
+                        <tr><td><code>500</code></td><td>Internal server error</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
