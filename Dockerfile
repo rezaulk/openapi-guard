@@ -7,6 +7,7 @@ COPY ["OpenApiGuard.sln", "."]
 COPY ["src/OpenApiGuard.Core/OpenApiGuard.Core.csproj", "src/OpenApiGuard.Core/"]
 COPY ["src/OpenApiGuard.Contracts/OpenApiGuard.Contracts.csproj", "src/OpenApiGuard.Contracts/"]
 COPY ["src/OpenApiGuard.Infrastructure/OpenApiGuard.Infrastructure.csproj", "src/OpenApiGuard.Infrastructure/"]
+COPY ["src/OpenApiGuard.Api/OpenApiGuard.Api.csproj", "src/OpenApiGuard.Api/"]
 COPY ["src/OpenApiGuard.App/OpenApiGuard.App.csproj", "src/OpenApiGuard.App/"]
 
 # Restore dependencies
